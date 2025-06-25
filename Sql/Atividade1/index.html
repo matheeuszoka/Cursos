@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo de Dados com Herança - E-commerce</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .diagram-container {
+            position: relative;
+            width: 100%;
+            height: 1200px;
+            border: 2px solid #34495e;
+            border-radius: 15px;
+            background: linear-gradient(45deg, #f8f9fa 0%, #e9ecef 100%);
+            overflow: auto;
+            box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .entity {
+            position: absolute;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: 2px solid #2c3e50;
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 200px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .entity:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        }
+        
+        .superclass {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            border: 3px solid #8e44ad;
+        }
+        
+        .subclass {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            border: 2px solid #d35400;
+        }
+        
+        .new-entity {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            animation: pulse 3s infinite;
+        }
+        
+        .entity-header {
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c3e50;
+            padding: 8px 12px;
+            margin: -15px -15px 10px -15px;
+            border-radius: 10px 10px 0 0;
+            font-weight: bold;
+            font-size: 1.1em;
+            text-align: center;
+            border-bottom: 2px solid #2c3e50;
+        }
+        
+        .superclass .entity-header {
+            background: rgba(255, 255, 255, 0.95);
+            color: #8e44ad;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .subclass .entity-header {
+            background: rgba(255, 255, 255, 0.95);
+            color: #d35400;
+        }
+        
+        .attribute {
+            color: white;
+            margin: 5px 0;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            font-size: 0.9em;
+        }
+        
+        .pk {
+            background: rgba(231, 76, 60, 0.9);
+            font-weight: bold;
+            border: 1px solid #fff;
+        }
+        
+        .fk {
+            background: rgba(241, 196, 15, 0.9);
+            font-weight: bold;
+            border: 1px solid #fff;
+        }
+        
+        .inheritance-line {
+            position: absolute;
+            border-left: 3px solid #8e44ad;
+            border-style: dashed;
+            z-index: 1;
+        }
+        
+        .inheritance-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 12px solid #8e44ad;
+            z-index: 2;
+        }
+        
+        .relationship-line {
+            position: absolute;
+            background: #e74c3c;
+            z-index: 1;
+            border-radius: 2px;
+        }
+        
+        .relationship-label {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8em;
+            font-weight: bold;
+            color: #2c3e50;
+            border: 1px solid #e74c3c;
+            z-index: 2;
+        }
+        
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #34495e;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .legend h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        
+        .legend-superclass {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+        
+        .legend-subclass {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+        
+        .legend-new {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+        }
+        
+        .legend-normal {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+        
+        .inheritance-symbol {
+            color: #8e44ad;
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+        
+        .improvements {
+            margin-top: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #8e44ad, #9b59b6);
+            border-radius: 15px;
+            color: white;
+        }
+        
+        .improvements h2 {
+            margin-top: 0;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .improvement-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 10px 0;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #f1c40f;
+        }
+        
+        .improvement-item h3 {
+            margin: 0 0 8px 0;
+            color: #f1c40f;
+        }
+        
+        .code-block {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏗️ Modelo de Dados com Herança - Sistema E-commerce</h1>
+        
+        <div class="diagram-container">
+            <!-- Legenda -->
+            <div class="legend">
+                <h3>Legenda</h3>
+                <div class="legend-item">
+                    <div class="legend-color pk"></div>
+                    <span>Chave Primária (PK)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color fk"></div>
+                    <span>Chave Estrangeira (FK)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-superclass"></div>
+                    <span>Superclasse</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-subclass"></div>
+                    <span>Subclasse</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-new"></div>
+                    <span>Novas Entidades</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-normal"></div>
+                    <span>Entidades Existentes</span>
+                </div>
+                <div class="legend-item">
+                    <span class="inheritance-symbol">△</span>
+                    <span>Herança/Especialização</span>
+                </div>
+            </div>
+            
+            <!-- Cliente (Superclasse) -->
+            <div class="entity superclass" style="top: 50px; left: 200px;">
+                <div class="entity-header">👤 Cliente (Superclasse)</div>
+                <div class="attribute pk">🔑 idCliente INT</div>
+                <div class="attribute">📧 email VARCHAR(100)</div>
+                <div class="attribute">📱 telefone VARCHAR(20)</div>
+                <div class="attribute">📅 data_cadastro DATETIME</div>
+                <div class="attribute">✅ ativo BOOLEAN</div>
+            </div>
+            
+            <!-- ClientePF (Subclasse) -->
+            <div class="entity subclass" style="top: 250px; left: 50px;">
+                <div class="entity-header">👨 ClientePF</div>
+                <div class="attribute pk fk">🔑 idCliente INT (PK, FK → Cliente)</div>
+                <div class="attribute">👤 nome VARCHAR(100)</div>
+                <div class="attribute">🆔 RG VARCHAR(20)</div>
+                <div class="attribute">📄 CPF VARCHAR(14)</div>
+                <div class="attribute">📍 endereco VARCHAR(200)</div>
+                <div class="attribute">📅 data_nascimento DATE</div>
+            </div>
+            
+            <!-- ClientePJ (Subclasse) -->
+            <div class="entity subclass" style="top: 250px; left: 350px;">
+                <div class="entity-header">🏢 ClientePJ</div>
+                <div class="attribute pk fk">🔑 idCliente INT (PK, FK → Cliente)</div>
+                <div class="attribute">🏪 razao_social VARCHAR(150)</div>
+                <div class="attribute">🆔 CNPJ VARCHAR(18)</div>
+                <div class="attribute">📊 inscricao_estadual VARCHAR(20)</div>
+                <div class="attribute">📍 endereco VARCHAR(200)</div>
+                <div class="attribute">👤 nome_responsavel VARCHAR(100)</div>
+            </div>
+            
+            <!-- Linhas de Herança -->
+            <div class="inheritance-line" style="top: 180px; left: 275px; height: 70px;"></div>
+            <div class="inheritance-line" style="top: 250px; left: 125px; width: 275px; height: 3px;"></div>
+            <div class="inheritance-arrow" style="top: 168px; left: 267px;"></div>
+            
+            <!-- Pagamento -->
+            <div class="entity new-entity" style="top: 50px; left: 600px;">
+                <div class="entity-header">💳 Pagamento</div>
+                <div class="attribute pk">🔑 idPagamento INT</div>
+                <div class="attribute fk">🔗 Cliente_idCliente INT</div>
+                <div class="attribute">💰 tipo_pagamento ENUM('Cartão', 'PIX', 'Boleto', 'Débito')</div>
+                <div class="attribute">🏦 numero_cartao VARCHAR(20) NULL</div>
+                <div class="attribute">👤 nome_titular VARCHAR(100) NULL</div>
+                <div class="attribute">📅 validade DATE NULL</div>
+                <div class="attribute">🔒 cvv VARCHAR(4) NULL</div>
+                <div class="attribute">🔑 chave_pix VARCHAR(100) NULL</div>
+                <div class="attribute">✅ ativo BOOLEAN DEFAULT TRUE</div>
+                <div class="attribute">📅 data_cadastro DATETIME</div>
+            </div>
+            
+            <!-- Pedido -->
+            <div class="entity" style="top: 450px; left: 400px;">
+                <div class="entity-header">📋 Pedido</div>
+                <div class="attribute pk">🔑 idPedido INT</div>
+                <div class="attribute">📊 status VARCHAR(45)</div>
+                <div class="attribute">📝 descricao VARCHAR(100)</div>
+                <div class="attribute">📅 data_pedido DATETIME</div>
+                <div class="attribute">💰 valor_total DECIMAL(10,2)</div>
+                <div class="attribute">💰 frete DECIMAL(8,2)</div>
+                <div class="attribute fk">🔗 Cliente_idCliente INT</div>
+                <div class="attribute fk">🔗 Pagamento_idPagamento INT</div>
+            </div>
+            
+            <!-- Entrega -->
+            <div class="entity new-entity" style="top: 450px; left: 750px;">
+                <div class="entity-header">🚚 Entrega</div>
+                <div class="attribute pk">🔑 idEntrega INT</div>
+                <div class="attribute fk">🔗 Pedido_idPedido INT</div>
+                <div class="attribute">📦 status_entrega ENUM('Preparando', 'Enviado', 'Em Trânsito', 'Entregue', 'Devolvido')</div>
+                <div class="attribute">📍 codigo_rastreio VARCHAR(50)</div>
+                <div class="attribute">🚛 transportadora VARCHAR(100)</div>
+                <div class="attribute">📅 data_envio DATETIME</div>
+                <div class="attribute">📅 previsao_entrega DATE</div>
+                <div class="attribute">📅 data_entrega DATETIME NULL</div>
+                <div class="attribute">📝 observacoes TEXT NULL</div>
+            </div>
+            
+            <!-- Fornecedor -->
+            <div class="entity" style="top: 50px; left: 1000px;">
+                <div class="entity-header">🏭 Fornecedor</div>
+                <div class="attribute pk">🔑 idFornecedor INT</div>
+                <div class="attribute">🏢 razao_social VARCHAR(150)</div>
+                <div class="attribute">🆔 CNPJ VARCHAR(18)</div>
+                <div class="attribute">📧 email VARCHAR(100)</div>
+                <div class="attribute">📱 telefone VARCHAR(20)</div>
+            </div>
+            
+            <!-- Vendedor3 -->
+            <div class="entity" style="top: 250px; left: 1000px;">
+                <div class="entity-header">👨‍💼 Vendedor3</div>
+                <div class="attribute pk">🔑 idVendedor3 INT</div>
+                <div class="attribute">🏢 razao_social VARCHAR(150)</div>
+                <div class="attribute">📍 local VARCHAR(100)</div>
+                <div class="attribute">📧 email VARCHAR(100)</div>
+                <div class="attribute">📱 telefone VARCHAR(20)</div>
+            </div>
+            
+            <!-- Produto -->
+            <div class="entity" style="top: 750px; left: 750px;">
+                <div class="entity-header">📦 Produto</div>
+                <div class="attribute pk">🔑 idProduto INT</div>
+                <div class="attribute">📂 categoria VARCHAR(100)</div>
+                <div class="attribute">📝 descricao VARCHAR(200)</div>
+                <div class="attribute">💰 preco DECIMAL(10,2)</div>
+                <div class="attribute">⚖️ peso DECIMAL(8,3)</div>
+                <div class="attribute">📏 dimensoes VARCHAR(50)</div>
+                <div class="attribute">📸 imagem_url VARCHAR(255)</div>
+                <div class="attribute">✅ ativo BOOLEAN</div>
+            </div>
+            
+            <!-- Estoque -->
+            <div class="entity" style="top: 750px; left: 50px;">
+                <div class="entity-header">📊 Estoque</div>
+                <div class="attribute pk">🔑 idEstoque INT</div>
+                <div class="attribute">📍 local VARCHAR(100)</div>
+                <div class="attribute">📝 descricao VARCHAR(200)</div>
+                <div class="attribute">📱 responsavel VARCHAR(100)</div>
+            </div>
+            
+            <!-- Tabelas de Relacionamento -->
+            <div class="entity" style="top: 450px; left: 1000px;">
+                <div class="entity-header">🔗 Vendedor3_has_Produto</div>
+                <div class="attribute fk">🔑 Vendedor3_idVendedor3 INT</div>
+                <div class="attribute fk">🔑 Produto_idProduto INT</div>
+                <div class="attribute">📊 quantidade INT</div>
+                <div class="attribute">💰 preco_acordado DECIMAL(10,2)</div>
+            </div>
+            
+            <div class="entity" style="top: 650px; left: 400px;">
+                <div class="entity-header">🔗 Pedido_has_Produto</div>
+                <div class="attribute fk">🔑 Pedido_idPedido INT</div>
+                <div class="attribute fk">🔑 Produto_idProduto INT</div>
+                <div class="attribute">📊 quantidade INT</div>
+                <div class="attribute">💰 preco_unitario DECIMAL(10,2)</div>
+                <div class="attribute">💰 subtotal DECIMAL(10,2)</div>
+            </div>
+            
+            <div class="entity" style="top: 250px; left: 750px;">
+                <div class="entity-header">🔗 Produto_has_Fornecedor</div>
+                <div class="attribute fk">🔑 Produto_idProduto INT</div>
+                <div class="attribute fk">🔑 Fornecedor_idFornecedor INT</div>
+                <div class="attribute">💰 preco_compra DECIMAL(10,2)</div>
+                <div class="attribute">📅 data_contrato DATE</div>
+            </div>
+            
+            <div class="entity" style="top: 950px; left: 400px;">
+                <div class="entity-header">🔗 Produto_has_Estoque</div>
+                <div class="attribute fk">🔑 Produto_idProduto INT</div>
+                <div class="attribute fk">🔑 Estoque_idEstoque INT</div>
+                <div class="attribute">📊 quantidade INT</div>
+                <div class="attribute">📊 estoque_minimo INT</div>
+                <div class="attribute">📅 data_atualizacao DATETIME</div>
+            </div>
+            
+            <!-- Relacionamentos -->
+            <div class="relationship-line" style="top: 120px; left: 400px; width: 200px; height: 3px;"></div>
+            <div class="relationship-label" style="top: 115px; left: 480px;">1:N</div>
+            
+            <div class="relationship-line" style="top: 350px; left: 300px; width: 100px; height: 3px;"></div>
+            <div class="relationship-label" style="top: 345px; left: 325px;">1:N</div>
+            
+            <div class="relationship-line" style="top: 520px; left: 650px; width: 100px; height: 3px;"></div>
+            <div class="relationship-label" style="top: 515px; left: 675px;">1:1</div>
+        </div>
+        
+        <div class="improvements">
+            <h2>🏗️ Arquitetura com Herança Implementada</h2>
+            
+            <div class="improvement-item">
+                <h3>🎯 Estrutura de Herança Cliente</h3>
+                <p><strong>Superclasse Cliente:</strong> Contém atributos comuns a todos os tipos de cliente</p>
+                <div class="code-block">
+Cliente (Superclasse)
+├── idCliente (PK) - Identificador único
+├── email - Contato principal
+├── telefone - Contato secundário
+├── data_cadastro - Data de registro
+└── ativo - Status do cliente
+                </div>
+                
+                <p><strong>Subclasses Especializadas:</strong></p>
+                <div class="code-block">
+ClientePF (Pessoa Física)
+├── idCliente (PK, FK → Cliente)
+├── nome - Nome completo
+├── RG - Documento de identidade
+├── CPF - Cadastro de Pessoa Física
+├── endereco - Endereço residencial
+└── data_nascimento - Data de nascimento
+
+ClientePJ (Pessoa Jurídica)
+├── idCliente (PK, FK → Cliente)
+├── razao_social - Razão social da empresa
+├── CNPJ - Cadastro Nacional de Pessoa Jurídica
+├── inscricao_estadual - Inscrição estadual
+├── endereco - Endereço comercial
+└── nome_responsavel - Responsável pela conta
+                </div>
+            </div>
+            
+            <div class="improvement-item">
+                <h3>✨ Vantagens da Arquitetura de Herança</h3>
+                <ul>
+                    <li><strong>Normalização:</strong> Elimina redundância de dados comuns</li>
+                    <li><strong>Integridade:</strong> Impossível ter dados PF e PJ no mesmo registro</li>
+                    <li><strong>Flexibilidade:</strong> Fácil extensão para novos tipos de cliente</li>
+                    <li><strong>Manutenibilidade:</strong> Alterações em dados comuns feitas em um só lugar</li>
+                    <li><strong>Performance:</strong> Consultas mais eficientes com índices específicos</li>
+                </ul>
+            </div>
+            
+            <div class="improvement-item">
+                <h3>💳 Sistema de Pagamento Robusto</h3>
+                <p>Entidade Pagamento com relacionamento direto à superclasse Cliente, permitindo:</p>
+                <ul>
+                    <li>Múltiplos métodos de pagamento por cliente (PF ou PJ)</li>
+                    <li>Validações específicas por tipo de pagamento</li>
+                    <li>Histórico completo de métodos cadastrados</li>
+                    <li>Sistema de ativação/desativação de métodos</li>
+                </ul>
+            </div>
+            
+            <div class="improvement-item">
+                <h3>🚚 Controle de Entrega Avançado</h3>
+                <p>Sistema completo de rastreamento com:</p>
+                <ul>
+                    <li><strong>Status Progressivo:</strong> Preparando → Enviado → Em Trânsito → Entregue</li>
+                    <li><strong>Rastreamento:</strong> Código único para acompanhamento</li>
+                    <li><strong>Logística:</strong> Controle de transportadora e prazos</li>
+                    <li><strong>Auditoria:</strong> Histórico completo de datas e status</li>
+                </ul>
+            </div>
+            
+            <div class="improvement-item">
+                <h3>🔄 Implementação Recomendada</h3>
+                <div class="code-block">
+-- Exemplo de consulta para buscar cliente completo
+SELECT c.*, 
+       pf.nome, pf.cpf,
+       pj.razao_social, pj.cnpj
+FROM Cliente c
+LEFT JOIN ClientePF pf ON c.idCliente = pf.idCliente
+LEFT JOIN ClientePJ pj ON c.idCliente = pj.idCliente
+WHERE c.idCliente = ?
+
+-- Trigger para garantir integridade
+-- Cliente deve ser PF OU PJ, nunca ambos
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
