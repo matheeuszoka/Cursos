@@ -12,7 +12,7 @@ create table clients(
     Address varchar(30),
     constraint unique_cpf_client unique(CPF)
 );
-
+alter table clients auto_increment=1;
 create table product(
 
 	idProduct int auto_increment primary key,
@@ -106,4 +106,18 @@ create table productSupplier(
     constraint fk_product_supplier_seller foreign key (idPsSupplier) references supplier(idSupplier),
     constraint fk_productsupplier_product foreign key (idPsProduct) references product(idProduct)
 );
+
+select count(*) from clients;
+select * from clients c, orders o where c.idClient=idOrderClient;
+
+select Fname, Lname, idOrder, orderStatus from clients c, orders o where c.idClient = idOrderClient;
+select concat(Fname,' ',Lname) as Client, idOrder as Request, orderStatus as Status from clients c, orders o where c.idClient= idOrderClient;
+
+select count(*) from clients c, orders o
+				where c.idClient = idOrderClient;
+
+select c.idClient, Fname, count(*) as Number_of_orders from clients c inner join orders o ON c.idClient = o.idOrderClient
+						inner join productOrder p on p.idPOorder = o.idOrder
+                        group by idClient;
+                
 show tables;
