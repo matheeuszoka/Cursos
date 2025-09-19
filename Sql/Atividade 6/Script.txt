@@ -1,0 +1,295 @@
+# Configurações
+DB_USER="root"
+DB_PASSWORD="sua_senha"
+DB_HOST="localhost"
+DB_NAME="ecommerce"
+BACKUP_DIR="/backup/mysql"
+DATE=$(date +%Y%m%d_%H%M%S)
+
+# Criar diretório de backup se não existir
+mkdir -p $BACKUP_DIR
+
+echo "========================================="
+echo "SCRIPTS DE BACKUP E RECOVERY - MySQL"
+echo "========================================="
+
+# ========================================
+# 1. BACKUP COMPLETO DO BANCO E-COMMERCE
+# ========================================
+
+echo "1. Realizando backup completo do banco e-commerce..."
+
+mysqldump \
+  --user=$DB_USER \
+  --password=$DB_PASSWORD \
+  --host=$DB_HOST \
+  --routines \
+  --triggers \
+  --events \
+  --single-transaction \
+  --lock-tables=false \
+  --add-drop-database \
+  --databases $DB_NAME > $BACKUP_DIR/ecommerce_backup_$DATE.sql
+
+if [ $? -eq 0 ]; then
+    echo "✓ Backup completo criado: ecommerce_backup_$DATE.sql"
+else
+    echo "✗ Erro no backup completo"
+    exit 1
+fi
+
+# ========================================
+# 2. BACKUP SOMENTE DA ESTRUTURA
+# ========================================
+
+echo "2. Realizando backup da estrutura (sem dados)..."
+
+mysqldump \
+  --user=$DB_USER \
+  --password=$DB_PASSWORD \
+  --host=$DB_HOST \
+  --no-data \
+  --routines \
+  --triggers \
+  --events \
+  --databases $DB_NAME > $BACKUP_DIR/ecommerce_structure_$DATE.sql
+
+if [ $? -eq 0 ]; then
+    echo "✓ Backup da estrutura criado: ecommerce_structure_$DATE.sql"
+else
+    echo "✗ Erro no backup da estrutura"
+fi
+
+# ========================================
+# 3. BACKUP SOMENTE DOS DADOS
+# ========================================
+
+echo "3. Realizando backup dos dados (sem estrutura)..."
+
+mysqldump \
+  --user=$DB_USER \
+  --password=$DB_PASSWORD \
+  --host=$DB_HOST \
+  --no-create-info \
+  --single-transaction \
+  --lock-tables=false \
+  $DB_NAME > $BACKUP_DIR/ecommerce_data_$DATE.sql
+
+if [ $? -eq 0 ]; then
+    echo "✓ Backup dos dados criado: ecommerce_data_$DATE.sql"
+else
+    echo "✗ Erro no backup dos dados"
+fi
+
+# ========================================
+# 4. BACKUP DE MÚLTIPLOS BANCOS
+# ========================================
+
+echo "4. Realizando backup de múltiplos bancos..."
+
+# Lista de bancos para backup
+DATABASES=("ecommerce" "mysql" "information_schema" "performance_schema")
+
+for db in "${DATABASES[@]}"
+do
+    echo "   Fazendo backup do banco: $db"
+    mysqldump \
+      --user=$DB_USER \
+      --password=$DB_PASSWORD \
+      --host=$DB_HOST \
+      --routines \
+      --triggers \
+      --events \
+      --single-transaction \
+      --databases $db > $BACKUP_DIR/backup_${db}_$DATE.sql
+      
+    if [ $? -eq 0 ]; then
+        echo "   ✓ Backup de $db concluído"
+    else
+        echo "   ✗ Erro no backup de $db"
+    fi
+done
+
+# ========================================
+# 5. BACKUP DE TODOS OS BANCOS
+# ========================================
+
+echo "5. Realizando backup completo de todos os bancos..."
+
+mysqldump \
+  --user=$DB_USER \
+  --password=$DB_PASSWORD \
+  --host=$DB_HOST \
+  --routines \
+  --triggers \
+  --events \
+  --single-transaction \
+  --all-databases > $BACKUP_DIR/all_databases_backup_$DATE.sql
+
+if [ $? -eq 0 ]; then
+    echo "✓ Backup de todos os bancos criado: all_databases_backup_$DATE.sql"
+else
+    echo "✗ Erro no backup de todos os bancos"
+fi
+
+# ========================================
+# 6. BACKUP COMPRIMIDO
+# ========================================
+
+echo "6. Realizando backup comprimido..."
+
+mysqldump \
+  --user=$DB_USER \
+  --password=$DB_PASSWORD \
+  --host=$DB_HOST \
+  --routines \
+  --triggers \
+  --events \
+  --single-transaction \
+  --databases $DB_NAME | gzip > $BACKUP_DIR/ecommerce_backup_$DATE.sql.gz
+
+if [ $? -eq 0 ]; then
+    echo "✓ Backup comprimido criado: ecommerce_backup_$DATE.sql.gz"
+else
+    echo "✗ Erro no backup comprimido"
+fi
+
+# ========================================
+# 7. RECOVERY (RESTAURAÇÃO) DO BANCO
+# ========================================
+
+echo "========================================="
+echo "PROCEDIMENTOS DE RECOVERY"
+echo "========================================="
+
+# Função para restaurar backup
+restore_backup() {
+    local backup_file=$1
+    local target_db=$2
+    
+    echo "Restaurando $backup_file para o banco $target_db..."
+    
+    # Criar banco se não existir
+    mysql --user=$DB_USER --password=$DB_PASSWORD --host=$DB_HOST -e "CREATE DATABASE IF NOT EXISTS $target_db;"
+    
+    # Restaurar backup
+    mysql --user=$DB_USER --password=$DB_PASSWORD --host=$DB_HOST $target_db < $backup_file
+    
+    if [ $? -eq 0 ]; then
+        echo "✓ Restauração concluída com sucesso"
+    else
+        echo "✗ Erro na restauração"
+        return 1
+    fi
+}
+
+# Exemplo de uso da função de restore
+# restore_backup "$BACKUP_DIR/ecommerce_backup_$DATE.sql" "ecommerce_restored"
+
+# ========================================
+# 8. RECOVERY DE BACKUP COMPRIMIDO
+# ========================================
+
+restore_compressed_backup() {
+    local backup_file=$1
+    local target_db=$2
+    
+    echo "Restaurando backup comprimido $backup_file para o banco $target_db..."
+    
+    # Criar banco se não existir
+    mysql --user=$DB_USER --password=$DB_PASSWORD --host=$DB_HOST -e "CREATE DATABASE IF NOT EXISTS $target_db;"
+    
+    # Descomprimir e restaurar
+    gunzip < $backup_file | mysql --user=$DB_USER --password=$DB_PASSWORD --host=$DB_HOST $target_db
+    
+    if [ $? -eq 0 ]; then
+        echo "✓ Restauração do backup comprimido concluída"
+    else
+        echo "✗ Erro na restauração do backup comprimido"
+        return 1
+    fi
+}
+
+# ========================================
+# 9. VERIFICAÇÃO DA INTEGRIDADE DOS BACKUPS
+# ========================================
+
+verify_backup() {
+    local backup_file=$1
+    
+    echo "Verificando integridade do backup: $backup_file"
+    
+    # Verificar se o arquivo existe
+    if [ ! -f "$backup_file" ]; then
+        echo "✗ Arquivo de backup não encontrado: $backup_file"
+        return 1
+    fi
+    
+    # Verificar se o arquivo não está vazio
+    if [ ! -s "$backup_file" ]; then
+        echo "✗ Arquivo de backup está vazio: $backup_file"
+        return 1
+    fi
+    
+    # Verificar se contém comandos SQL básicos
+    if grep -q "CREATE\|INSERT\|DROP" "$backup_file"; then
+        echo "✓ Backup parece válido: $backup_file"
+        return 0
+    else
+        echo "✗ Backup não contém comandos SQL esperados: $backup_file"
+        return 1
+    fi
+}
+
+# ========================================
+# 10. LIMPEZA DE BACKUPS ANTIGOS
+# ========================================
+
+cleanup_old_backups() {
+    local days_to_keep=$1
+    
+    echo "Removendo backups mais antigos que $days_to_keep dias..."
+    
+    find $BACKUP_DIR -name "*.sql" -type f -mtime +$days_to_keep -delete
+    find $BACKUP_DIR -name "*.sql.gz" -type f -mtime +$days_to_keep -delete
+    
+    echo "✓ Limpeza de backups antigos concluída"
+}
+
+# ========================================
+# 11. RELATÓRIO DE BACKUPS
+# ========================================
+
+backup_report() {
+    echo "========================================="
+    echo "RELATÓRIO DE BACKUPS"
+    echo "========================================="
+    echo "Data: $(date)"
+    echo "Diretório: $BACKUP_DIR"
+    echo ""
+    echo "Arquivos de backup encontrados:"
+    ls -lh $BACKUP_DIR/*.sql $BACKUP_DIR/*.sql.gz 2>/dev/null || echo "Nenhum backup encontrado"
+    echo ""
+    echo "Espaço usado pelo diretório de backup:"
+    du -sh $BACKUP_DIR
+    echo "========================================="
+}
+
+# ========================================
+# EXECUÇÃO DO RELATÓRIO
+# ========================================
+
+backup_report
+
+echo ""
+echo "========================================="
+echo "BACKUP E RECOVERY CONCLUÍDOS!"
+echo "========================================="
+echo ""
+echo "Para restaurar um backup, use:"
+echo "mysql -u $DB_USER -p nome_do_banco < arquivo_de_backup.sql"
+echo ""
+echo "Para backup comprimido:"
+echo "gunzip < arquivo_backup.sql.gz | mysql -u $DB_USER -p nome_do_banco"
+echo ""
+echo "Arquivos gerados em: $BACKUP_DIR"
